@@ -1,0 +1,43 @@
+name: Build Missing Icon APK
+
+on:
+  push:
+    branches: [ "main", "master" ] # 코드가 push되면 자동으로 실행됩니다.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 깃허브 저장소의 파일들을 가상 서버로 가져옵니다.
+    - name: Checkout project
+      uses: actions/checkout@v4
+
+    # 2. 올리신 ZIP 압축 파일의 압축을 해제합니다.
+    - name: Unzip project files
+      run: |
+        unzip -o *.zip
+        ls -la # 파일이 잘 풀렸는지 확인하는 명령어
+
+    # 3. 안드로이드 빌드에 필요한 자바(Java) 환경을 세팅합니다.
+    - name: set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    # 4. 빌드 프로그램(gradlew)에 실행 권한을 줍니다.
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # 5. 오토마우스 앱을 아이콘이 없는 APK 파일로 구워냅니다.
+    - name: Build with Gradle
+      run: ./gradlew assembleDebug
+
+    # 6. 완성된 APK 파일을 다운로드할 수 있도록 깃허브에 업로드합니다.
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: missing-icon-automouse
+        path: app/build/outputs/apk/debug/*.apk
